@@ -53,13 +53,13 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
             'xanchor': 'center',
             'yanchor': 'top'
         },
-        font=dict(size=40, family="Arial Black", color="#f754c9"),
+        font=dict(size=40, family="Tahoma", color="#f754c9"),
         scene=dict(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
             zaxis=dict(visible=False),
             camera=dict(
-            eye=dict(x=-2.1, y=3, z=1)  # Чем больше значения, тем дальше камера
+            eye=dict(x=-1.3, y=2.5, z=1)  # Чем больше значения, тем дальше камера
         ))
         )
 
@@ -72,13 +72,25 @@ def home():
     response = make_response(render_template_string(
         """<html>
         <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poiret+One&display=swap" rel="stylesheet">
+
         <style>
+            h1 {   font-family: "Poiret One", serif;
+                font-weight: 700;
+                font-style: normal;
+                position: absolute; 
+                top: 20px; 
+                font-size: 40px; 
+                text-align: center; 
+                color: #f754c9; }
             body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; background: #ffe6f2; }
             #plotly-container { width: 100vw; height: 100vh; }
             canvas {margin-top: -300px;}
             .img1 {
                 position: absolute;
-                bottom: 440px;
+                bottom: 200px;
                 right: 1px;
                 display: block;
                 margin: 20px auto;
@@ -89,7 +101,7 @@ def home():
             }
             .img2 {
                 position: absolute;
-                bottom: 200px;
+                bottom: 10px;
                 left: 1px;
                 display: block;
                 margin: 20px auto;
@@ -102,6 +114,7 @@ def home():
         </style>
         </head>
         <body>
+            <h1>❤️ Люблю тебе, котусику! ❤️</h1>
             <div id="plotly-container">{{ graph | safe }}</div>
             <img class="img1" src="{{ url_for('static', filename='photo_1.jpg') }}" alt="photo1" width="400">
             <img class="img2" src="{{ url_for('static', filename='photo_2.jpg') }}" alt="photo2" width="400">
