@@ -8,8 +8,7 @@ import threading
 
 app = Flask(__name__)
 
-# Кеш для графіка, щоб не будувати щоразу
-cached_graph = None
+cached_graph = None  # Кеш графіка для швидшого завантаження
 
 def get_zvalue(a, b, x, y):
     constant = x ** 2 + ((1 + b) * y) ** 2 - 1
@@ -26,12 +25,12 @@ def get_zvalue(a, b, x, y):
     z = rts[~np.iscomplex(rts)]
     return z.real if len(z) > 0 else []
 
-def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff1493']):
+def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff8888']):
     global cached_graph
     if cached_graph:
         return cached_graph  # Використовуємо кешовану версію
 
-    x = np.arange(-2, 2, grid)
+    x = np.arange(-3, 3, grid)
     y = x
     all_triplets = [[i, j, k] for i in x for j in y for k in get_zvalue(a, b, i, j)]
     
@@ -40,26 +39,29 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff14
 
     fig = go.Figure(data=px.scatter_3d(df, x='x', y='y', z='z',
                                        color='z', color_continuous_scale=palette,
-                                       height=800, width=800,
                                        template="plotly_white",
                                        size_max=10))
 
     fig.update(layout_coloraxis_showscale=False)
     fig.update_layout(
-        paper_bgcolor='#ffe6f2',  # Колір фону
+        autosize=True,  # Додаємо адаптивність
+        paper_bgcolor='#ffe6f2',
         title={
             'text': '❤️ Люблю тебе, котусику! ❤️',
-            'x': 0.5,  # Центруємо заголовок
-            'y': 0.95,  # Трохи вище, щоб гарніше виглядало
+            'x': 0.5,  
+            'y': 0.95,
             'xanchor': 'center',
             'yanchor': 'top'
         },
-        font=dict(size=24, family="Arial Black", color="#f754c9"),
+        font=dict(size=40, family="Arial Black", color="#f754c9"),
         scene=dict(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
             zaxis=dict(visible=False),
+            camera=dict(
+            eye=dict(x=-2.1, y=3, z=1)  # Чем больше значения, тем дальше камера
         ))
+        )
 
     cached_graph = fig.to_html(full_html=False)  # Кешуємо графік
     return cached_graph
@@ -68,13 +70,23 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff14
 def home():
     graph_html = draw_heart()
     response = make_response(render_template_string(
-        "<html><body style='text-align: center; background: #ff1493;'>{{ graph | safe }}</body></html>", graph=graph_html))
-    response.headers["Cache-Control"] = "public, max-age=86400"  # Кеш на 1 день
+        """<html>
+        <head>
+        <style>
+            body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; background: #ffe6f2; }
+            #plotly-container { width: 100vw; height: 100vh; }
+        </style>
+        </head>
+        <body>
+            <div id="plotly-container">{{ graph | safe }}</div>
+        </body>
+        </html>""", graph=graph_html))
     return response
 
-# Фоновий рендеринг, щоб прискорити перший запит
+
+# Фоновий рендеринг для швидкого старту
 threading.Thread(target=draw_heart).start()
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)  
