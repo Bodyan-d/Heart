@@ -8,8 +8,7 @@ import threading
 
 app = Flask(__name__)
 
-# Кеш для графіка, щоб не будувати щоразу
-cached_graph = None
+cached_graph = None  # Кеш графіка для швидшого завантаження
 
 def get_zvalue(a, b, x, y):
     constant = x ** 2 + ((1 + b) * y) ** 2 - 1
@@ -40,17 +39,17 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
 
     fig = go.Figure(data=px.scatter_3d(df, x='x', y='y', z='z',
                                        color='z', color_continuous_scale=palette,
-                                       height=600, width=600,
                                        template="plotly_white",
                                        size_max=10))
 
     fig.update(layout_coloraxis_showscale=False)
     fig.update_layout(
-        paper_bgcolor='#ffe6f2',  # Колір фону
+        autosize=True,  # Додаємо адаптивність
+        paper_bgcolor='#ffe6f2',
         title={
             'text': '❤️ Люблю тебе, котусику! ❤️',
-            'x': 0.5,  # Центруємо заголовок
-            'y': 0.95,  # Трохи вище, щоб гарніше виглядало
+            'x': 0.5,  
+            'y': 0.95,
             'xanchor': 'center',
             'yanchor': 'top'
         },
@@ -68,11 +67,22 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
 def home():
     graph_html = draw_heart()
     response = make_response(render_template_string(
-        "<html><body style='text-align: center;'>{{ graph | safe }}</body></html>", graph=graph_html))
+        """<html>
+        <head>
+        <style>
+            body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; background: #ffe6f2; }
+            #plotly-container { width: 100vw; height: 100vh; }
+        </style>
+        </head>
+        <body>
+            <div id="plotly-container">{{ graph | safe }}</div>
+        </body>
+        </html>""", graph=graph_html))
     response.headers["Cache-Control"] = "public, max-age=86400"  # Кеш на 1 день
     return response
 
-# Фоновий рендеринг, щоб прискорити перший запит
+
+# Фоновий рендеринг для швидкого старту
 threading.Thread(target=draw_heart).start()
 
 if __name__ == "__main__":
