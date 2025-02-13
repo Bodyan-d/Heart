@@ -1,6 +1,7 @@
 certifi==2025.1.31
 charset-normalizer==3.4.1
 chart-studio==1.1.0
+gunicorn==23.0.0
 idna==3.10
 narwhals==1.26.0
 numpy==2.2.3
