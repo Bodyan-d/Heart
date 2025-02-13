@@ -75,10 +75,36 @@ def home():
         <style>
             body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; background: #ffe6f2; }
             #plotly-container { width: 100vw; height: 100vh; }
+            canvas {margin-top: -300px;}
+            .img1 {
+                position: absolute;
+                bottom: 440px;
+                right: 1px;
+                display: block;
+                margin: 20px auto;
+                max-width: 80%;
+                border-radius: 10px;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+                transform: rotate(15deg);
+            }
+            .img2 {
+                position: absolute;
+                bottom: 200px;
+                left: 1px;
+                display: block;
+                margin: 20px auto;
+                max-width: 80%;
+                border-radius: 10px;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+                transform: rotate(-15deg); 
+            }
+
         </style>
         </head>
         <body>
             <div id="plotly-container">{{ graph | safe }}</div>
+            <img class="img1" src="{{ url_for('static', filename='photo_1.jpg') }}" alt="photo1" width="400">
+            <img class="img2" src="{{ url_for('static', filename='photo_2.jpg') }}" alt="photo2" width="400">
         </body>
         </html>""", graph=graph_html))
     return response
