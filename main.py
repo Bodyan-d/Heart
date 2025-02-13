@@ -1,15 +1,13 @@
+from flask import Flask, render_template_string
 import plotly.graph_objects as go
 import numpy as np
 import plotly.express as px
 import pandas as pd
-import chart_studio.plotly as py
+import os
+
+app = Flask(__name__)
 
 def get_zvalue(a, b, x, y):
-    """
-    Finds the roots of the polynomial in z
-    for given values of
-    a, b, x, y.
-    """
     constant = x ** 2 + ((1 + b) * y) ** 2 - 1
     c0 = constant ** 3
     c1 = 0.0
@@ -23,21 +21,9 @@ def get_zvalue(a, b, x, y):
     rts = np.roots(coefficients)
     z = rts[~np.iscomplex(rts)]
 
-    if len(z) > 0:
-        zreal = z.real
-        return zreal
-    else:
-        return []
-
+    return z.real if len(z) > 0 else []
 
 def draw_heart(a=9/200, b=0.01, grid=0.03, palette='viridis'):
-    """
-    Draws the figure
-    @param a: a>0
-    @param b:
-    @param grid: sparsity of the scatter
-    @param palette: palette
-    """
     x = np.arange(-2, 2, grid)
     y = x
 
@@ -46,43 +32,31 @@ def draw_heart(a=9/200, b=0.01, grid=0.03, palette='viridis'):
         for j in y:
             zaxis = get_zvalue(a, b, i, j)
             for k in zaxis:
-                triplet = [i, j, k]
-                all_triplets.append(triplet)
+                all_triplets.append([i, j, k])
+
     results = np.array(all_triplets).transpose()
+    df = pd.DataFrame({'x': results[0], 'y': results[1], 'z': results[2]})
 
-    # Save the triplets in a data frame
-    xaxis = results[0]
-    yaxis = results[1]
-    zaxis = results[2]
-    df = pd.DataFrame({'x': xaxis, 'y': yaxis, 'z': zaxis})
-
-    # Draw
     fig = go.Figure(data=px.scatter_3d(df, x='x', y='y', z='z',
-                                       color='z',
-                                       color_continuous_scale=palette,
+                                       color='z', color_continuous_scale=palette,
                                        height=800, width=800,
                                        template="plotly_white",
                                        size_max=10))
 
     fig.update(layout_coloraxis_showscale=False)
+    fig.update_layout(paper_bgcolor='#ffe6f2', title='Люблю тебе котусику!',
+                      font=dict(size=20, family="Arial Black", color="#f754c9"),
+                      scene=dict(xaxis=dict(visible=False),
+                                 yaxis=dict(visible=False),
+                                 zaxis=dict(visible=False)))
 
-    fig.update_layout(
-        paper_bgcolor='#ffe6f2',
-        title='Люблю тебе котусику!', 
-        title_x=0.5,  # Встановлюємо заголовок по центру (можна коригувати для відступу)
-        title_y=0.95,  # Встановлюємо заголовок трохи вище (можна коригувати для відступу)
-        font=dict(
-            size=20,
-            family="Arial Black",
-            color="#f754c9"
-        ),
-        
-        scene=dict(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            zaxis=dict(visible=False),
-        ))
-    fig.show()
+    return fig.to_html(full_html=False)
 
+@app.route("/")
+def home():
+    graph_html = draw_heart(palette=['#ff0000', '#ff69b4', '#ff1493'])
+    return render_template_string("<html><body>{{ graph | safe }}</body></html>", graph=graph_html)
 
-draw_heart(palette=['#ff0000', '#ff69b4', '#ff1493'])
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5000))  # Використовуємо змінну середовища, або 5000 за замовчуванням
+    app.run(host="0.0.0.0", port=port)
