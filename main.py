@@ -1,14 +1,11 @@
-from flask import Flask, render_template_string, make_response
+from flask import Flask, render_template_string
 import os
 import plotly.graph_objects as go
 import numpy as np
 import plotly.express as px
 import pandas as pd
-import threading
 
 app = Flask(__name__)
-
-cached_graph = None  # Кеш графіка для швидшого завантаження
 
 def get_zvalue(a, b, x, y):
     constant = x ** 2 + ((1 + b) * y) ** 2 - 1
@@ -25,11 +22,7 @@ def get_zvalue(a, b, x, y):
     z = rts[~np.iscomplex(rts)]
     return z.real if len(z) > 0 else []
 
-def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff8888']):
-    global cached_graph
-    if cached_graph:
-        return cached_graph  # Використовуємо кешовану версію
-
+def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff69b4', '#ff1493']):
     x = np.arange(-2, 2, grid)
     y = x
     all_triplets = [[i, j, k] for i in x for j in y for k in get_zvalue(a, b, i, j)]
@@ -44,10 +37,10 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
 
     fig.update(layout_coloraxis_showscale=False)
     fig.update_layout(
-        autosize=True,  # Додаємо адаптивність
-        paper_bgcolor='#ffe6f2',
+        autosize=True,  
+        paper_bgcolor='rgba(255, 230, 242, 1)',  
         title={
-            'text': '❤️ Люблю тебе, котусику! ❤️',
+            'text': '❤️ Люблю тебе котусику! ❤️',
             'x': 0.5,  
             'y': 0.95,
             'xanchor': 'center',
@@ -60,30 +53,48 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
             zaxis=dict(visible=False),
         ))
 
-    cached_graph = fig.to_html(full_html=False)  # Кешуємо графік
-    return cached_graph
+    return fig.to_html(full_html=False, include_plotlyjs=False, config={"responsive": True})
 
 @app.route("/")
 def home():
     graph_html = draw_heart()
-    response = make_response(render_template_string(
-        """<html>
+    return render_template_string(
+        """<!DOCTYPE html>
+        <html lang="uk">
         <head>
-        <style>
-            body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; background: #ffe6f2; }
-            #plotly-container { width: 100vw; height: 100vh; }
-        </style>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                html, body { 
+                    width: 100vw; 
+                    height: 100vh; 
+                    overflow: hidden; 
+                    background: #f754c9 !important; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                }
+                #plotly-container { width: 100vw; height: 100vh; }
+                .plotly-graph-div { width: 100% !important; height: 100% !important; }
+                svg.main-svg { width: 100% !important; height: 100% !important; }
+            </style>
         </head>
         <body>
             <div id="plotly-container">{{ graph | safe }}</div>
+            <script>
+                function resizePlotly() {
+                    let graph = document.getElementById('plotly-container').getElementsByClassName('plotly-graph-div')[0];
+                    if (graph) {
+                        Plotly.relayout(graph, { width: window.innerWidth, height: window.innerHeight });
+                    }
+                }
+                window.addEventListener('resize', resizePlotly);
+                window.onload = resizePlotly;
+            </script>
         </body>
-        </html>""", graph=graph_html))
-    response.headers["Cache-Control"] = "public, max-age=86400"  # Кеш на 1 день
-    return response
-
-
-# Фоновий рендеринг для швидкого старту
-threading.Thread(target=draw_heart).start()
+        </html>""", graph=graph_html)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
