@@ -66,7 +66,7 @@ def home():
     response = make_response(render_template_string(
         """<html>
         <head>
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script defer src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <style>
             body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; background: #ffe6f2; }
             #plotly-container { width: 100vw; height: 100vh; }
