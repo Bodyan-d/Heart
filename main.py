@@ -8,7 +8,6 @@ import threading
 
 app = Flask(__name__)
 
-
 def get_zvalue(a, b, x, y):
     constant = x ** 2 + ((1 + b) * y) ** 2 - 1
     c0 = constant ** 3
@@ -37,10 +36,11 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
                                        color='z', color_continuous_scale=palette,
                                        template="plotly_white",
                                        size_max=10))
-
+    
     fig.update(layout_coloraxis_showscale=False)
+    
     fig.update_layout(
-        autosize=True,  # Додаємо адаптивність
+        autosize=True,  
         paper_bgcolor='#ffe6f2',
         title={
             'text': '❤️ Люблю тебе, котусику! ❤️',
@@ -53,14 +53,12 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
         scene=dict(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
-            zaxis=dict(visible=False),
-            camera=dict(
-            eye=dict(x=-1.3, y=2.5, z=1)  # Чем больше значения, тем дальше камера
-        ))
+            zaxis=dict(visible=False, showbackground=False),
+            camera=dict(eye=dict(x=2, y=2, z=1.5))  # Початковий кут камери
         )
+    )
 
-    
-    return fig.to_html(full_html=False)
+    return fig.to_html(full_html=False, include_plotlyjs='cdn', div_id="plotly-div")
 
 @app.route("/")
 def home():
@@ -68,8 +66,8 @@ def home():
     response = make_response(render_template_string(
         """<html>
         <head>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <style>
-
             body { margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; background: #ffe6f2; }
             #plotly-container { width: 100vw; height: 100vh; }
             canvas {margin-top: -300px;}
@@ -95,12 +93,33 @@ def home():
                 box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
                 transform: rotate(-15deg); 
             }
-
         </style>
         </head>
         <body>
-
             <div id="plotly-container">{{ graph | safe }}</div>
+
+            <script>
+            window.onload = function() {
+                let angle = 0;
+                function rotatePlot() {
+                    angle += 0.15;  // Плавне обертання
+                    let radianAngle = angle * Math.PI / 180;
+                    let camera = {
+                        eye: {
+                            x: 3 * Math.cos(radianAngle),
+                            y: 3 * Math.sin(radianAngle),
+                        }
+                    };
+                    let plot = document.getElementById("plotly-div");
+                    if (plot) {
+                        Plotly.relayout(plot, { 'scene.camera': camera });
+                    }
+                    requestAnimationFrame(rotatePlot);
+                }
+                rotatePlot();
+            };
+            </script>
+
             <img class="img1" src="{{ url_for('static', filename='photo_1.jpg') }}" alt="photo1" width="400">
             <img class="img2" src="{{ url_for('static', filename='photo_2.jpg') }}" alt="photo2" width="400">
         </body>
@@ -113,4 +132,4 @@ threading.Thread(target=draw_heart).start()
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)  
+    app.run(host="0.0.0.0", port=port, debug=True)
