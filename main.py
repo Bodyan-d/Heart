@@ -8,7 +8,6 @@ import threading
 
 app = Flask(__name__)
 
-cached_graph = None  # Кеш графіка для швидшого завантаження
 
 def get_zvalue(a, b, x, y):
     constant = x ** 2 + ((1 + b) * y) ** 2 - 1
@@ -26,9 +25,6 @@ def get_zvalue(a, b, x, y):
     return z.real if len(z) > 0 else []
 
 def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff8888']):
-    global cached_graph
-    if cached_graph:
-        return cached_graph  # Використовуємо кешовану версію
 
     x = np.arange(-3, 3, grid)
     y = x
@@ -63,8 +59,8 @@ def draw_heart(a=9/200, b=0.01, grid=0.05, palette=['#ff0000', '#ff4444', '#ff88
         ))
         )
 
-    cached_graph = fig.to_html(full_html=False)  # Кешуємо графік
-    return cached_graph
+    
+    return fig.to_html(full_html=False)
 
 @app.route("/")
 def home():
